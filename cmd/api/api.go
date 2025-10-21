@@ -2,7 +2,9 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/Infamous003/go-blog-backend/service/user"
 	"github.com/go-chi/chi/v5"
@@ -12,12 +14,16 @@ import (
 type APIServer struct {
 	addr string
 	db   *sql.DB
+	l    *log.Logger
 }
 
 func NewAPIServer(addr string, db *sql.DB) *APIServer {
+	l := log.New(os.Stdout, "[api] ", log.LstdFlags|log.Lshortfile)
+
 	return &APIServer{
 		addr: addr,
 		db:   db,
+		l:    l,
 	}
 }
 
@@ -30,9 +36,7 @@ func (s *APIServer) Run() error {
 	userHandler := user.NewHandler()
 	userHandler.RegisterRoutes(apiRouter)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("What's up!"))
-	})
+	r.Get("/", handleRoot)
 
 	r.Mount("/api/v1", apiRouter)
 
@@ -40,5 +44,12 @@ func (s *APIServer) Run() error {
 		Addr:    s.addr,
 		Handler: r,
 	}
+
+	s.l.Printf("Server starting on %s\n", s.addr)
+
 	return newServer.ListenAndServe()
+}
+
+func handleRoot(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("WHat's up!"))
 }
