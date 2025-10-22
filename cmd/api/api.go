@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -9,16 +8,17 @@ import (
 	"github.com/Infamous003/go-blog-backend/service/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type APIServer struct {
 	addr string
-	db   *sql.DB
+	db   *pgxpool.Pool
 	l    *log.Logger
 }
 
-func NewAPIServer(addr string, db *sql.DB) *APIServer {
-	l := log.New(os.Stdout, "[api] ", log.LstdFlags|log.Lshortfile)
+func NewAPIServer(addr string, db *pgxpool.Pool) *APIServer {
+	l := log.New(os.Stdout, "[API] ", log.LstdFlags|log.Lshortfile)
 
 	return &APIServer{
 		addr: addr,
@@ -45,7 +45,7 @@ func (s *APIServer) Run() error {
 		Handler: r,
 	}
 
-	s.l.Printf("Server starting on %s\n", s.addr)
+	s.l.Printf("Server running on port %s\n", s.addr)
 
 	return newServer.ListenAndServe()
 }
