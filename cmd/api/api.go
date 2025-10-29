@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Infamous003/go-blog-backend/service/user"
+	"github.com/Infamous003/go-blog-backend/internal/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,7 +33,10 @@ func (s *APIServer) Run() error {
 
 	apiRouter := chi.NewRouter()
 
-	userHandler := user.NewHandler()
+	userRepository := user.NewRepository(s.db)
+	userService := user.NewService(userRepository)
+	userHandler := user.NewHandler(userService)
+
 	userHandler.RegisterRoutes(apiRouter)
 
 	r.Get("/", handleRoot)
