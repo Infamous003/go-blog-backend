@@ -28,9 +28,9 @@ func (s *Service) RegisterUser(ctx context.Context, payload *UserRegister) (*Use
 	log.Printf("[INFO] Username: %v", payload.Username)
 	// converting incoming `UserRegister` to `User` model
 	newUser := &User{
+		Username: payload.Username,
 		Fname:    payload.Fname,
 		Lname:    payload.Lname,
-		Username: payload.Username,
 		Email:    payload.Email,
 		Password: payload.Password,
 	}
@@ -46,9 +46,9 @@ func (s *Service) RegisterUser(ctx context.Context, payload *UserRegister) (*Use
 	userPublic := &UserPublic{
 		ID:       createdUser.ID,
 		Username: createdUser.Username,
-		Email:    createdUser.Email,
 		Fname:    createdUser.Fname,
 		Lname:    createdUser.Lname,
+		Email:    createdUser.Email,
 	}
 
 	return userPublic, nil

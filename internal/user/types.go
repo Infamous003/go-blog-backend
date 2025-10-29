@@ -7,18 +7,18 @@ import (
 var validate = validator.New()
 
 type UserRegister struct {
+	Username string `json:"username" validate:"required,min=4,max=32"`
 	Fname    string `json:"fname" validate:"required,max=32"`
 	Lname    string `json:"lname" validate:"required,max=32"`
-	Username string `json:"username" validate:"required,min=4,max=32"`
 	Email    string `json:"email" validate:"required,email,max=64"`
 	Password string `json:"password" validate:"required,min=8,max=32"`
 }
 
 type UserPublic struct {
 	ID       int    `json:"id"`
+	Username string `json:"username"`
 	Fname    string `json:"fname"`
 	Lname    string `json:"lname"`
-	Username string `json:"username"`
 	Email    string `json:"email"`
 }
 

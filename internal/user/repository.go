@@ -3,22 +3,31 @@ package user
 import (
 	"context"
 	"errors"
+	"log"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Our data access layer
-// All the functions that let you access the User data lie here
-
-type Repository struct {
-	db *pgxpool.Pool
-}
-
 var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrUserAlreadyExists = errors.New("user already exists")
 )
+
+type User struct {
+	ID        int // json tags & validation isnt needed at the DB level
+	Username  string
+	Email     string
+	Password  string
+	Fname     string
+	Lname     string
+	CreatedAt time.Time
+}
+
+type Repository struct {
+	db *pgxpool.Pool
+}
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
@@ -29,7 +38,11 @@ GetAll returns a list of users ([]*UserPublic) or an error.
 The argument required is a request context.
 */
 func (r *Repository) GetAll(ctx context.Context) ([]*User, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, fname, lname, username, email FROM users`)
+	query := `
+		SELECT id, username, fname, lname, email, password, created_at
+		FROM users
+	`
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +54,12 @@ func (r *Repository) GetAll(ctx context.Context) ([]*User, error) {
 		var u User
 		if err := rows.Scan(
 			&u.ID,
+			&u.Username,
 			&u.Fname,
 			&u.Lname,
 			&u.Email,
+			&u.Password,
+			&u.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -95,7 +111,7 @@ func (r *Repository) GetByUsername(ctx context.Context, username string) (*User,
 
 func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 	query := `
-		INSERT INTO users (fname, lname, username, password, email)
+		INSERT INTO users (username, fname, lname, email, password)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, username, fname, lname, email, password, created_at
 	`
@@ -105,14 +121,14 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 	err := r.db.QueryRow(
 		ctx,
 		query,
+		user.Username,
 		user.Fname,
 		user.Lname,
-		user.Username,
-		user.Password,
-		user.Email).
+		user.Email,
+		user.Password).
 		Scan(
 			&u.ID,
-			&user.Username,
+			&u.Username,
 			&u.Fname,
 			&u.Lname,
 			&u.Email,
@@ -123,6 +139,7 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	log.Printf("[INFO] CREATED: %v", u)
+	log.Printf("[INFO] CREATED: %v", u.Username)
 	return &u, nil
 }
