@@ -35,23 +35,27 @@ type ErrorResonse struct {
 }
 
 func (u *UserRegister) Validate() error {
-	// validate.RegisterValidation("username", validateUsername)
 	return validate.Struct(u)
 }
 
-// func validateUsername(fl validator.FieldLevel) bool {
-// 	if fl.Field().String() == "admin" {
-// 		return false
-// 	}
+// Converts User model to UserPublic. Excluds fields like password
+func (u *User) ToPublic() *UserPublic {
+	return &UserPublic{
+		ID:       u.ID,
+		Username: u.Username,
+		Fname:    u.Fname,
+		Lname:    u.Lname,
+		Email:    u.Email,
+	}
+}
 
-// 	switch fl.Field().String() {
-// 	case "admin":
-// 		return false
-// 	case "nigga":
-// 		return false
-// 	case "fuck":
-// 		return false
-// 	}
-
-// 	return true
-// }
+// Converts UserRegister to User model, which represents user in DB
+func (u *UserRegister) ToUser() *User {
+	return &User{
+		Username: u.Username,
+		Fname:    u.Fname,
+		Lname:    u.Lname,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+}
