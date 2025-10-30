@@ -21,6 +21,7 @@ func NewHandler(s *Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+
 	r.Post("/auth/register", h.handleRegister)
 	r.Get("/users/username/{username}", h.handleGetByUsername)
 }
