@@ -4,6 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/Infamous003/go-blog-backend/internal/validate"
 
 	"github.com/Infamous003/go-blog-backend/utils"
 	"github.com/go-chi/chi/v5"
@@ -31,8 +34,9 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := payload.Validate(); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "validation failed")
+	if err := validate.Struct(payload); err != nil {
+		errs := strings.Join(validate.ErrorMessages(err), ", ")
+		utils.WriteError(w, http.StatusBadRequest, errs)
 		return
 	}
 

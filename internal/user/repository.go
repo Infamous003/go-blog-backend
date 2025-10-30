@@ -121,14 +121,14 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 		user.Username,
 		user.Fname,
 		user.Lname,
-		user.Email).
+		user.Email,
+		user.Password).
 		Scan(
 			&u.ID,
 			&u.Username,
 			&u.Fname,
 			&u.Lname,
 			&u.Email,
-			&u.Password,
 			&u.CreatedAt,
 		)
 

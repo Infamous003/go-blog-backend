@@ -1,17 +1,11 @@
 package user
 
-import (
-	"github.com/go-playground/validator/v10"
-)
-
-var validate = validator.New()
-
 type UserRegister struct {
-	Username string `json:"username" validate:"required,min=4,max=32"`
+	Username string `json:"username" validate:"required,username,min=4,max=32"`
 	Fname    string `json:"fname" validate:"required,max=32"`
 	Lname    string `json:"lname" validate:"required,max=32"`
 	Email    string `json:"email" validate:"required,email,max=64"`
-	Password string `json:"password" validate:"required,min=8,max=32"`
+	Password string `json:"password" validate:"required,password,min=8,max=32"`
 }
 
 type UserPublic struct {
@@ -23,19 +17,15 @@ type UserPublic struct {
 }
 
 type UserUpdate struct {
-	Fname    string `json:"fname"`
-	Lname    string `json:"lname"`
-	Username string `json:"username"`
-	Password string `json:"password" validate:"required"`
+	Fname    string `json:"fname" validate:"omitempty,max=32"`
+	Lname    string `json:"lname" validate:"omitempty,max=32"`
+	Username string `json:"username" validate:"omitempty,username,min=4,max=32"`
+	Password string `json:"password" validate:"omitempty,password,min=8,max=32"`
 }
 
-type ErrorResonse struct {
+type ErrorResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-}
-
-func (u *UserRegister) Validate() error {
-	return validate.Struct(u)
 }
 
 // Converts User model to UserPublic. Excluds fields like password
