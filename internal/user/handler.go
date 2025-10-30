@@ -19,6 +19,7 @@ func NewHandler(s *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/auth/register", h.handleRegister)
+	r.Get("/users/username/{username}", h.handleGetByUsername)
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,30 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff") // stops browsers from guessing content type
 	w.WriteHeader(http.StatusCreated)
+
+	if err := utils.ToJSON(w, user); err != nil {
+		log.Printf("[ERROR] ToJSON: %v", err)
+		utils.WriteError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+}
+
+func (h *Handler) handleGetByUsername(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+
+	user, err := h.s.GetUser(r.Context(), username)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		log.Printf("[ERROR] get user: %v", err)
+		utils.WriteError(w, http.StatusInternalServerError, "internal server error")
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
 
 	if err := utils.ToJSON(w, user); err != nil {
 		log.Printf("[ERROR] ToJSON: %v", err)

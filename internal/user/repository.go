@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -39,7 +38,7 @@ The argument required is a request context.
 */
 func (r *Repository) GetAll(ctx context.Context) ([]*User, error) {
 	query := `
-		SELECT id, username, fname, lname, email, password, created_at
+		SELECT id, username, fname, lname, email, created_at
 		FROM users
 	`
 	rows, err := r.db.Query(ctx, query)
@@ -58,7 +57,6 @@ func (r *Repository) GetAll(ctx context.Context) ([]*User, error) {
 			&u.Fname,
 			&u.Lname,
 			&u.Email,
-			&u.Password,
 			&u.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -78,7 +76,7 @@ It takes in a context and a username as args.
 */
 func (r *Repository) GetByUsername(ctx context.Context, username string) (*User, error) {
 	query := `
-		SELECT id, username, fname, lname, email, password, created_at
+		SELECT id, username, fname, lname, email, created_at
 		FROM users
 		WHERE username=$1
 	`
@@ -95,7 +93,6 @@ func (r *Repository) GetByUsername(ctx context.Context, username string) (*User,
 			&user.Fname,
 			&user.Lname,
 			&user.Email,
-			&user.Password,
 			&user.CreatedAt,
 		)
 
@@ -113,7 +110,7 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 	query := `
 		INSERT INTO users (username, fname, lname, email, password)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, username, fname, lname, email, password, created_at
+		RETURNING id, username, fname, lname, email, created_at
 	`
 
 	var u User
@@ -124,8 +121,7 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 		user.Username,
 		user.Fname,
 		user.Lname,
-		user.Email,
-		user.Password).
+		user.Email).
 		Scan(
 			&u.ID,
 			&u.Username,
@@ -139,7 +135,5 @@ func (r *Repository) Create(ctx context.Context, user *User) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[INFO] CREATED: %v", u)
-	log.Printf("[INFO] CREATED: %v", u.Username)
 	return &u, nil
 }

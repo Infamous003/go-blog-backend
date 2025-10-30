@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -15,7 +16,6 @@ func NewService(repo *Repository) *Service {
 
 // RegisterUser creates a new user if the username isn't already taken.
 // ErrUserAlreadyExists is one of the expected errors.
-// If there are no errors, it returns the created user (*UserPublic)
 func (s *Service) RegisterUser(ctx context.Context, payload *UserRegister) (*UserPublic, error) {
 	// CHecking if the user already exists or not
 	if _, err := s.repo.GetByUsername(ctx, payload.Username); err == nil {
@@ -35,4 +35,17 @@ func (s *Service) RegisterUser(ctx context.Context, payload *UserRegister) (*Use
 	// converting `User` to `UserPublic`
 	userPublic := createdUser.ToPublic()
 	return userPublic, nil
+}
+
+func (s *Service) GetUser(ctx context.Context, username string) (*UserPublic, error) {
+	user, err := s.repo.GetByUsername(ctx, username)
+
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	return user.ToPublic(), nil
 }
