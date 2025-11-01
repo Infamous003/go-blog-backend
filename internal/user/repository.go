@@ -32,6 +32,34 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
+func (r *Repository) GetByID(ctx context.Context, id int) (*User, error) {
+	query := `
+		SELECT id, username, fname, lname, email, created_at
+		FROM users
+		WHERE id=$1
+	`
+	var user User
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Fname,
+		&user.Lname,
+		&user.Email,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 /*
 GetAll returns a list of users ([]*UserPublic) or an error.
 The argument required is a request context.
@@ -68,6 +96,20 @@ func (r *Repository) GetAll(ctx context.Context) ([]*User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *Repository) Delete(ctx context.Context, id int) error {
+	query := `DELETE FROM users WHERE id=$1`
+
+	cmd, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
 }
 
 /*

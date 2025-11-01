@@ -23,7 +23,8 @@ func NewHandler(s *Service) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 
 	r.Post("/auth/register", h.handleRegister)
-	r.Get("/users/username/{username}", h.handleGetByUsername)
+	r.Get("/users/{id}", h.handleGetByID)
+	r.Delete("/users/{id}", h.handleDelete)
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -58,15 +59,18 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	if err := utils.ToJSON(w, user); err != nil {
 		log.Printf("[ERROR] ToJSON: %v", err)
-		utils.WriteError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 }
 
-func (h *Handler) handleGetByUsername(w http.ResponseWriter, r *http.Request) {
-	username := chi.URLParam(r, "username")
+func (h *Handler) handleGetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "not found")
+		return
+	}
 
-	user, err := h.s.GetUser(r.Context(), username)
+	user, err := h.s.GetUser(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			utils.WriteError(w, http.StatusNotFound, "user not found")
@@ -74,15 +78,37 @@ func (h *Handler) handleGetByUsername(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("[ERROR] get user: %v", err)
 		utils.WriteError(w, http.StatusInternalServerError, "internal server error")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusOK)
 
-	if err := utils.ToJSON(w, user); err != nil {
+	if err = utils.ToJSON(w, user); err != nil {
 		log.Printf("[ERROR] ToJSON: %v", err)
+		return
+	}
+}
+
+func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "not found")
+		return
+	}
+
+	err = h.s.DeleteByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "user not found")
+			return
+		}
 		utils.WriteError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
 }

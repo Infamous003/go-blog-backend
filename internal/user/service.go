@@ -37,15 +37,22 @@ func (s *Service) RegisterUser(ctx context.Context, payload *UserRegister) (*Use
 	return userPublic, nil
 }
 
-func (s *Service) GetUser(ctx context.Context, username string) (*UserPublic, error) {
-	user, err := s.repo.GetByUsername(ctx, username)
+func (s *Service) GetUser(ctx context.Context, id int) (*UserPublic, error) {
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return user.ToPublic(), nil
+}
 
+func (s *Service) DeleteByID(ctx context.Context, id int) error {
+	err := s.repo.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			return nil, ErrUserNotFound
+			return ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to fetch user: %w", err)
+		return err
 	}
 
-	return user.ToPublic(), nil
+	return nil
 }
