@@ -7,6 +7,7 @@ import (
 
 	"github.com/Infamous003/go-blog-backend/config"
 	"github.com/Infamous003/go-blog-backend/internal/user"
+	"github.com/Infamous003/go-blog-backend/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,6 +31,10 @@ func (s *Server) Run() error {
 	r := chi.NewRouter()
 	apiRouter := chi.NewMux()
 	r.Use(middleware.Logger)
+
+	// Making Chi use custom handlers for errors
+	r.NotFound(utils.NotFoundResponse)
+	r.MethodNotAllowed(utils.MethodNotAllowedResponse)
 
 	userRepo := user.NewRepository(s.db)
 	userService := user.NewService(userRepo)

@@ -53,13 +53,11 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff") // stops browsers from guessing content type
-	w.WriteHeader(http.StatusCreated)
+	var headers http.Header
+	headers.Set("X-Content-Type-Options", "nosniff")
 
-	if err := utils.ToJSON(w, user); err != nil {
-		log.Printf("[ERROR] ToJSON: %v", err)
-		return
+	if err := utils.WriteJSON(w, http.StatusCreated, user, headers); err != nil {
+		log.Printf("[ERROR] WriteJSON: %v", err)
 	}
 }
 
@@ -81,11 +79,7 @@ func (h *Handler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusOK)
-
-	if err = utils.ToJSON(w, user); err != nil {
+	if err = utils.WriteJSON(w, http.StatusOK, user, nil); err != nil {
 		log.Printf("[ERROR] ToJSON: %v", err)
 		return
 	}
