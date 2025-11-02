@@ -31,7 +31,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	payload := &UserRegister{} // creating an empty payload
-	if err := utils.FromJSON(r.Body, payload); err != nil {
+	if err := utils.ReadJSON(w, r, payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}

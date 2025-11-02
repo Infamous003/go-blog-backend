@@ -2,9 +2,9 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -14,6 +14,39 @@ func FromJSON(r io.Reader, payload any) error {
 	}
 
 	return json.NewDecoder(r).Decode(payload)
+}
+
+func ReadJSON(w http.ResponseWriter, r *http.Request, dest any) error {
+	err := json.NewDecoder(r.Body).Decode(dest)
+	if err != nil {
+		var syntaxError *json.SyntaxError
+		var unmarshalTypeError *json.UnmarshalTypeError
+		var invalidUnmarshalError *json.InvalidUnmarshalError
+
+		switch {
+		case errors.As(err, &syntaxError):
+			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			return errors.New("body contains badly-formed JSON")
+
+		case errors.As(err, &unmarshalTypeError):
+			if unmarshalTypeError.Field != "" {
+				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+			}
+			return fmt.Errorf("body contains incorrect JSON type (at character %d)", unmarshalTypeError.Offset)
+
+		case errors.Is(err, io.EOF):
+			return errors.New("body must not be empty")
+
+		case errors.As(err, &invalidUnmarshalError):
+			panic(err)
+
+		default:
+			return err
+		}
+	}
+	return nil
 }
 
 func WriteJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
@@ -35,30 +68,4 @@ func WriteJSON(w http.ResponseWriter, status int, data any, headers http.Header)
 	w.Write(dataBytes)
 
 	return nil
-}
-
-func WriteError(w http.ResponseWriter, status int, message string) {
-	data := map[string]string{
-		"error": message,
-	}
-	err := WriteJSON(w, status, data, nil)
-	if err != nil {
-		w.WriteHeader(500)
-	}
-}
-
-func NotFoundResponse(w http.ResponseWriter, r *http.Request) {
-	message := "the requested resource could not be found"
-	WriteError(w, http.StatusNotFound, message)
-}
-
-func ServerErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	message := "the server encountered a problem and could not process your request"
-	log.Printf("[ERROR] %v", err)
-	WriteError(w, http.StatusInternalServerError, message)
-}
-
-func MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
-	message := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
-	WriteError(w, http.StatusMethodNotAllowed, message)
 }
