@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func WriteError(w http.ResponseWriter, status int, message string) {
-	data := map[string]string{
+func WriteError(w http.ResponseWriter, status int, message any) {
+	data := map[string]any{
 		"error": message,
 	}
 	err := WriteJSON(w, status, data, nil)
@@ -30,4 +30,8 @@ func ServerErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 func MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("the %s method is not supported for this resource", r.Method)
 	WriteError(w, http.StatusMethodNotAllowed, message)
+}
+
+func FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	WriteError(w, http.StatusUnprocessableEntity, errors)
 }

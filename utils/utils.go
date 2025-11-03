@@ -8,14 +8,6 @@ import (
 	"net/http"
 )
 
-func FromJSON(r io.Reader, payload any) error {
-	if payload == nil {
-		return fmt.Errorf("missing request body")
-	}
-
-	return json.NewDecoder(r).Decode(payload)
-}
-
 func ReadJSON(w http.ResponseWriter, r *http.Request, dest any) error {
 	err := json.NewDecoder(r.Body).Decode(dest)
 	if err != nil {

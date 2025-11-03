@@ -4,9 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 
-	"github.com/Infamous003/go-blog-backend/internal/validate"
+	"github.com/Infamous003/go-blog-backend/internal/validator"
+	// "github.com/go-playground/validator/v10"
 
 	"github.com/Infamous003/go-blog-backend/utils"
 	"github.com/go-chi/chi/v5"
@@ -36,9 +36,10 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validate.Struct(payload); err != nil {
-		errs := strings.Join(validate.ErrorMessages(err), ", ")
-		utils.WriteError(w, http.StatusBadRequest, errs)
+	v := validator.New()
+	ValidateUser(v, payload)
+	if !v.Valid() {
+		utils.FailedValidationResponse(w, r, v.Errors)
 		return
 	}
 
@@ -53,7 +54,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var headers http.Header
+	headers := make(http.Header)
 	headers.Set("X-Content-Type-Options", "nosniff")
 
 	if err := utils.WriteJSON(w, http.StatusCreated, user, headers); err != nil {
